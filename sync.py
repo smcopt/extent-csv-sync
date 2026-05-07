@@ -232,13 +232,17 @@ def sync():
             wkt_lookup[sid] = wkt_val
     log.info("WKT lookup built: %d sites with extents", len(wkt_lookup))
 
-    # 3. Build lookup: Site ID → detail row from 5255
+    # 3. Build lookup: Site ID → detail row from 5255 (Active sites only)
     detail_lookup: dict[str, dict] = {}
+    skipped_inactive = 0
     for rec in details_data:
         sid = rec.get("Site ID", "").strip()
-        if sid:
+        status = rec.get("Site Status", "").strip()
+        if sid and status == "Active":
             detail_lookup[sid] = rec
-    log.info("Detail lookup built: %d sites", len(detail_lookup))
+        elif sid:
+            skipped_inactive += 1
+    log.info("Detail lookup built: %d active sites (%d inactive skipped)", len(detail_lookup), skipped_inactive)
 
     # 4. Connect to Drive and download current master CSV
     service = get_drive_service()
